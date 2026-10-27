@@ -1,30 +1,172 @@
-<!DOCTYPE html> <htm
-<?xml version="1.0" encoding="UTF-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" 
-        xmlns:tizen="http://tizen.org/ns/widgets" 
-        id="http://dhavalchauhan.tizen/GlobalCinemaTV" 
-        version="1.0.0" 
-        viewmodes="fullscreen">
-    
-    <tizen:application id="dhaval001.GlobalCinemaTV" 
-                       package="dhaval001" 
-                       exec="index.html" 
-                       required_version="5.0"/>
-    
-    <content src="index.html"/>
-    <feature name="http://tizen.org/feature/screen.size.all"/>
-    <icon src="icon.png"/>
-    <name>Global Cinema TV</name>
-    
-    <!-- સેમસંગ ટીવી પ્રોફાઇલ અને લેન્ડસ્કેપ સેટિંગ્સ -->
-    <tizen:profile name="tv"/>
-    <tizen:setting screen-orientation="landscape" 
-                   context-menu="enable" 
-                   background-support="disable" 
-                   encryption="disable" 
-                   install-location="auto"/>
-    
-    <!-- ટીવી ઈન્ટરનેટ અને રીમોટ કંટ્રોલ કી પ્રિવિલેજ -->
-    <tizen:privilege name="http://tizen.org/privilege/internet"/>
-    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
-</widget>
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Cinema TV</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: #111827;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #2563eb;
+    }
+    header h1 {
+      font-size: 20px;
+      color: #60a5fa;
+      letter-spacing: 1px;
+    }
+    .badge {
+      background: #ef4444;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 55px);
+    }
+    .player-section {
+      flex: 3;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+    .channel-sidebar {
+      flex: 1.2;
+      background: #111827;
+      border-left: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    .channel-sidebar h2 {
+      font-size: 15px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .channel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .channel-btn {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 2px solid transparent;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .channel-btn:hover, .channel-btn:focus, .channel-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: #ffffff;
+      outline: none;
+    }
+    .channel-btn span.tag {
+      font-size: 11px;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .instructions {
+      margin-top: auto;
+      background: #0b0f19;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📺 Global Cinema TV</h1>
+    <span class="badge">LIVE</span>
+  </header>
+
+  <div class="main-container">
+    <div class="player-section">
+      <video id="videoPlayer" controls autoplay playsinline></video>
+    </div>
+
+    <div class="channel-sidebar">
+      <h2>લાઇવ ચેનલો (Channels)</h2>
+      <div class="channel-list" id="channelList"></div>
+      <div class="instructions">
+        💡 <b>ટીવી રિમોટ:</b> એરો કીથી ચેનલ સિલેક્ટ કરી <b>OK</b> દબાવો.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const channels = [
+      { name: "Cinema Live Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", type: "HD" },
+      { name: "Cinema Live Stream 2", url: "https://test-streams.mux.dev/test_001/stream.m3u8", type: "720p" }
+    ];
+
+    const video = document.getElementById('videoPlayer');
+    const channelList = document.getElementById('channelList');
+    let hls = null;
+
+    function playChannel(url, btnElement) {
+      document.querySelectorAll('.channel-btn').forEach(b => b.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      if (Hls.isSupported()) {
+        if (hls) hls.destroy();
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.play();
+      }
+    }
+
+    channels.forEach((ch, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'channel-btn' + (idx === 0 ? ' active' : '');
+      btn.tabIndex = 0;
+      btn.innerHTML = `<span>${ch.name}</span><span class="tag">${ch.type}</span>`;
+      btn.onclick = () => playChannel(ch.url, btn);
+      channelList.appendChild(btn);
+    });
+
+    playChannel(channels[0].url, channelList.children[0]);
+  </script>
+</body>
+</html>
