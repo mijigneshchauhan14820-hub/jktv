@@ -1,0 +1,30 @@
+<!DOCTYPE html> <htm
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" 
+        xmlns:tizen="http://tizen.org/ns/widgets" 
+        id="http://dhavalchauhan.tizen/GlobalCinemaTV" 
+        version="1.0.0" 
+        viewmodes="fullscreen">
+    
+    <tizen:application id="dhaval001.GlobalCinemaTV" 
+                       package="dhaval001" 
+                       exec="index.html" 
+                       required_version="5.0"/>
+    
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <icon src="icon.png"/>
+    <name>Global Cinema TV</name>
+    
+    <!-- સેમસંગ ટીવી પ્રોફાઇલ અને લેન્ડસ્કેપ સેટિંગ્સ -->
+    <tizen:profile name="tv"/>
+    <tizen:setting screen-orientation="landscape" 
+                   context-menu="enable" 
+                   background-support="disable" 
+                   encryption="disable" 
+                   install-location="auto"/>
+    
+    <!-- ટીવી ઈન્ટરનેટ અને રીમોટ કંટ્રોલ કી પ્રિવિલેજ -->
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+</widget>
